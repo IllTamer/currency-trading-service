@@ -1,0 +1,24 @@
+# config-server 返回配置的优先级
+# 1. {name}-{profile}.yml - 针对某个应用+某个profile的特定配置
+# 2. application-{profile}.yml - 针对某个profile的全局配置
+# 3. {name}.yml - 针对某个应用+所有profile的配置
+# 4. application.yml - 所有应用的全局配置
+# 在设置好各个配置文件后，应当通过浏览器检查 config-server 返回的配置是否符合预期 http://localhost:8888/{name}/{profile}
+# 如果配置项中存在环境变量，则使用应用本身的环境变量去替换占位符。
+
+server:
+  # 配置服务端口默认 8888
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  profiles:
+    # 从文件读取配置时，Config Server 激活的 profile 必须设定为 native
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          # 配置文件搜索路径
+          search-locations: file:./config-repo, file:../config-repo, file:../../config-rep

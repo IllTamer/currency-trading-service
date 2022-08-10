@@ -1,0 +1,13 @@
+# 由于我们指定了应用的名称是 ui，且默认的 profile 是 default，因此，config-server 将返回以下4个配置文件
+# - ui-default.yml
+# - application-default.yml
+# - ui.yml
+# - application.yml
+# 并最终由此四个配置文件合成一段 json http://localhost:8888/ui/default
+
+spring:
+  application:
+    name: ui
+  config:
+    # configserver 需 spring-cloud-starter-config 依赖
+    import: configserver:${CONFIG_SERVER:http://localhost:8888}
