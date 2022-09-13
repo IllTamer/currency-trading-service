@@ -1,6 +1,6 @@
 package com.illtamer.service.currencytrading.sequencer;
 
-import com.illtamer.service.currencytrading.common.message.MessageHolder;
+import com.illtamer.service.currencytrading.common.messaging.MessageHolder;
 import com.illtamer.service.currencytrading.common.message.event.AbstractEvent;
 import com.illtamer.service.currencytrading.common.model.trade.EventEntity;
 import com.illtamer.service.currencytrading.common.model.trade.UniqueEventEntity;
@@ -21,6 +21,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class SequenceHandler extends AbstractDBService {
 
     private static final Logger log = LoggerFactory.getLogger(SequenceHandler.class);
+
+    private long lastTimestamp;
 
     public List<AbstractEvent> sequenceMessages(MessageHolder messageHolder, AtomicLong sequence, List<AbstractEvent> messages) throws Exception {
         List<UniqueEventEntity> uniques = new ArrayList<>(messages.size());
@@ -59,6 +61,17 @@ public class SequenceHandler extends AbstractDBService {
             db.insert(uniques);
         db.insert(events);
         return sequencedMessages;
+    }
+
+    public long getMaxSequenceId() {
+        final EventEntity last = db.from(EventEntity.class).orderBy("sequenceId").desc().first();
+        if (last == null) {
+            log.info("Can't find max sequenceId, set max sequenceId: 0.");
+            return 0;
+        }
+        this.lastTimestamp = last.getCreateAt();
+        log.debug("Find max sequenceId: {}, last timestamp: {}", last.getSequenceId(), this.lastTimestamp);
+        return last.getSequenceId();
     }
 
 }

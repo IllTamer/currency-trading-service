@@ -8,13 +8,21 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.Entity;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceException;
 import java.math.BigInteger;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * A simple ORM wrapper for JdbcTemplate.
@@ -109,8 +117,6 @@ public class DBTemplate {
 
     /**
      * Remove bean by id.
-     *
-     * @param bean The entity.
      */
     public <T> void delete(Class<T> clazz, Object id) {
         Mapper<?> mapper = getMapper(clazz);
@@ -203,15 +209,13 @@ public class DBTemplate {
             if (mapper.id.isIdentityId()) {
                 // using identityId:
                 KeyHolder keyHolder = new GeneratedKeyHolder();
-                rows = jdbcTemplate.update(new PreparedStatementCreator() {
-                    public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
-                        PreparedStatement ps = connection.prepareStatement(
-                                isIgnore ? mapper.insertIgnoreSQL : mapper.insertSQL, Statement.RETURN_GENERATED_KEYS);
-                        for (int i = 0; i < args.length; i++) {
-                            ps.setObject(i + 1, args[i]);
-                        }
-                        return ps;
+                rows = jdbcTemplate.update(connection -> {
+                    PreparedStatement ps = connection.prepareStatement(
+                            isIgnore ? mapper.insertIgnoreSQL : mapper.insertSQL, Statement.RETURN_GENERATED_KEYS);
+                    for (int i = 0; i < args.length; i++) {
+                        ps.setObject(i + 1, args[i]);
                     }
+                    return ps;
                 }, keyHolder);
                 if (rows == 1) {
                     Number key = keyHolder.getKey();
@@ -255,9 +259,10 @@ public class DBTemplate {
     }
 
     public String exportDDL() {
-        return String.join("\n\n", this.classMapping.values().stream().map((mapper) -> {
-            return mapper.ddl();
-        }).sorted().toArray(String[]::new));
+        return String.join("\n\n", this.classMapping.values().stream()
+                .map(Mapper::ddl)
+                .sorted()
+                .toArray(String[]::new));
     }
 
 }

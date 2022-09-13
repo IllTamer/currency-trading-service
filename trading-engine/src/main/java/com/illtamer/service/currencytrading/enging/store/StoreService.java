@@ -1,7 +1,7 @@
 package com.illtamer.service.currencytrading.enging.store;
 
 import com.illtamer.service.currencytrading.common.database.DBTemplate;
-import com.illtamer.service.currencytrading.common.message.MessageHolder;
+import com.illtamer.service.currencytrading.common.messaging.MessageHolder;
 import com.illtamer.service.currencytrading.common.message.event.AbstractEvent;
 import com.illtamer.service.currencytrading.common.model.trade.EventEntity;
 import org.springframework.beans.factory.annotation.Autowired;
